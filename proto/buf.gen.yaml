@@ -1,0 +1,28 @@
+version: v1
+managed:
+  enabled: true
+  go_package_prefix:
+    default: github.com/bufbuild/buf-tour/gen
+    except:
+      - buf.build/googleapis/googleapis
+plugins:
+  # generate go structs for protocol buffer defination
+  - plugin: buf.build/protocolbuffers/go
+    out: ../generated/go
+    opt:
+      - paths=source_relative
+  # generate gRPC stubs in golang
+  - plugin: buf.build/grpc/go
+    out: ../generated/go
+    opt:
+      - paths=source_relative
+  # generate reverse proxy from protocol definations
+  - plugin: buf.build/grpc-ecosystem/gateway
+    out: ../generated/go
+    opt:
+      - paths=source_relative
+  # generate openapi documentation for api
+  - plugin: buf.build/community/google-gnostic-openapi:v0.7.0
+    out: ../generated/openapiv3
+    opt:
+      - paths=source_relative
