@@ -1,0 +1,276 @@
+package macro
+
+import (
+	"github.com/sealbro/pikvm-automator/pkg/pikvm"
+	"strconv"
+	"strings"
+	"time"
+	"unicode"
+)
+
+// Key [\w\d]+
+// Mouse @\d+\'\d+
+// Delay \d+[sm]
+// Combinator \+
+// Splitter \|
+// StartGroup \(
+// EndGroup \)
+// StartRepeat \[
+// EndRepeat \]
+
+const (
+	empty         = ""
+	startGroup    = '('
+	endGroup      = ')'
+	startRepeat   = '['
+	endRepeat     = ']'
+	mouse         = '@'
+	mouseSplitter = '\''
+	combinator    = '+'
+	splitter      = '|'
+)
+
+type Expression struct {
+	events []Macro
+	exp    string
+}
+
+func New(exp string) *Expression {
+	return &Expression{
+		exp: exp,
+	}
+}
+
+func (e *Expression) Parse() Group {
+	if len(e.events) > 0 {
+		return Group{Events: append(make([]Macro, 0), e.events...)}
+	}
+
+	isDelay := false
+	isKeyEvent := false
+	isMouseEvent := false
+	isRepeat := false
+
+	var result []Macro
+	var current = empty
+	skipLetter := 0
+
+	finishKeyEvent := func() {
+		var tempResult []Macro
+
+		var startIndex = -1
+		for i := len(result) - 1; i >= 0; i-- {
+			if m, ok := result[i].(KeyEvent); ok {
+				if m.State {
+					startIndex = i
+					tempResult = append(tempResult, KeyEvent{Key: m.Key, State: false})
+				} else {
+					break
+				}
+			}
+		}
+
+		if len(current) > 0 {
+			result = append(result, KeyEvent{Key: pikvm.Key(current), State: true})
+			result = append(result, KeyEvent{Key: pikvm.Key(current), State: false})
+		}
+		if len(tempResult) > 0 {
+			var bindMacro Bind
+			bindMacro.Events = append(bindMacro.Events, result[startIndex:]...)
+			bindMacro.Events = append(bindMacro.Events, tempResult...)
+
+			result = append(make([]Macro, 0), result[:startIndex]...)
+			result = append(result, bindMacro)
+		}
+		current = empty
+		isKeyEvent = false
+	}
+
+	finishGroup := func() {
+		var repeatGroup Repeat
+		startIndex := -1
+		for i := len(result) - 1; i >= 0; i-- {
+			if m, ok := result[i].(Repeat); ok && len(m.Events) == 0 {
+				startIndex = i + 1
+				repeatGroup = m
+				break
+			}
+		}
+
+		if startIndex >= 0 {
+			repeatGroup.Events = append(repeatGroup.Events, result[startIndex:]...)
+			result = append(make([]Macro, 0), result[:startIndex-1]...)
+			result = append(result, repeatGroup)
+		}
+	}
+
+	finishMouseEvent := func() {
+		if strings.Contains(current, string(mouseSplitter)) && len(current) > 0 {
+			split := strings.Split(current, string(mouseSplitter))
+			xtoi, _ := strconv.Atoi(split[0])
+			ytoi, _ := strconv.Atoi(split[1])
+			result = append(result, MouseEvent{X: xtoi, Y: ytoi})
+			current = empty
+		}
+	}
+
+	for _, letter := range e.exp {
+		if skipLetter > 0 {
+			skipLetter--
+			continue
+		}
+
+		if isDelay {
+			if unicode.IsDigit(letter) {
+				current += string(letter)
+			} else {
+				atoi, _ := strconv.Atoi(current)
+				var delay time.Duration
+				if letter == 's' {
+					delay = time.Second * time.Duration(atoi)
+				} else if letter == 'm' {
+					delay = time.Millisecond * time.Duration(atoi)
+					skipLetter = 1 // skip 's'
+				}
+				result = append(result, Delay{Time: delay})
+				current = empty
+				isDelay = false
+			}
+			continue
+		}
+
+		if isKeyEvent {
+			if letter == combinator {
+				result = append(result, KeyEvent{Key: pikvm.Key(current), State: true})
+				current = empty
+				isKeyEvent = false
+			} else if letter == splitter {
+				finishKeyEvent()
+				current = empty
+				isKeyEvent = false
+			} else {
+				current += string(letter)
+			}
+			continue
+		}
+
+		if isRepeat {
+			if unicode.IsDigit(letter) {
+				isRepeat = true
+				current += string(letter)
+			}
+
+			if letter == endRepeat {
+				atoi, _ := strconv.Atoi(current)
+				result = append(result, Repeat{Repeats: atoi})
+				current = empty
+				isRepeat = false
+				skipLetter = 1 // skip '(' - startGroup
+			}
+			continue
+		}
+
+		if isMouseEvent {
+			if unicode.IsDigit(letter) || letter == mouseSplitter {
+				isMouseEvent = true
+				current += string(letter)
+			}
+			continue
+		}
+
+		if letter == mouse {
+			isMouseEvent = true
+			continue
+		}
+
+		if letter == splitter {
+			finishMouseEvent()
+			finishKeyEvent()
+			continue
+		}
+
+		if letter == endGroup {
+			finishMouseEvent()
+			finishKeyEvent()
+			finishGroup()
+			continue
+		}
+
+		if letter == startRepeat {
+			isRepeat = true
+			continue
+		}
+
+		if unicode.IsDigit(letter) {
+			isDelay = true
+			current = string(letter)
+			continue
+		}
+
+		if unicode.IsUpper(letter) {
+			isKeyEvent = true
+			current = string(letter)
+			continue
+		}
+	}
+
+	finishMouseEvent()
+	finishKeyEvent()
+
+	e.events = result
+	return Group{Events: append(make([]Macro, 0), e.events...)}
+}
+
+func (e *Expression) String() string {
+	return compile(e.events)
+}
+
+func compile(events []Macro) string {
+	sb := strings.Builder{}
+
+	for i, m := range events {
+		switch v := m.(type) {
+		case Delay:
+			milliseconds := v.Time.Milliseconds()
+			if milliseconds%1000 == 0 {
+				sb.WriteString(strconv.Itoa(int(v.Time.Seconds())))
+				sb.WriteString("s")
+				break
+			} else {
+				sb.WriteString(strconv.Itoa(int(milliseconds)))
+				sb.WriteString("ms")
+			}
+		case KeyEvent:
+			if v.State {
+				sb.WriteString(string(v.Key))
+			} else {
+				// skip splitter
+				continue
+			}
+		case MouseEvent:
+			sb.WriteString(string(mouse))
+			sb.WriteString(strconv.Itoa(v.X))
+			sb.WriteString(string(mouseSplitter))
+			sb.WriteString(strconv.Itoa(v.Y))
+		case Repeat:
+			sb.WriteString(string(startRepeat))
+			sb.WriteString(strconv.Itoa(v.Repeats))
+			sb.WriteString(string(endRepeat))
+			sb.WriteString(string(startGroup))
+			sb.WriteString(compile(v.Events))
+			sb.WriteString(string(endGroup))
+		case Bind:
+			sb.WriteString(strings.ReplaceAll(compile(v.Events), string(splitter), string(combinator)))
+		}
+
+		if i < len(events)-1 {
+			sb.WriteString(string(splitter))
+		}
+	}
+
+	s := sb.String()
+	if s[len(s)-1] == splitter {
+		s = s[:len(s)-1]
+	}
+	return s
+}

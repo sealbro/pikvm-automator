@@ -23,6 +23,31 @@ type MouseEvent struct {
 }
 
 type Repeat struct {
+	Group
 	Repeats int
-	Events  []Macro
+}
+
+type Bind struct {
+	Group
+}
+
+type Group struct {
+	Events []Macro
+}
+
+func (g *Group) TotalDelay() time.Duration {
+	var total time.Duration
+	for _, m := range g.Events {
+		switch v := m.(type) {
+		case Delay:
+			total += v.Time
+		case Repeat:
+			total += time.Duration(v.Repeats) * v.TotalDelay()
+		case Bind:
+			total += v.TotalDelay()
+		case Group:
+			total += v.TotalDelay()
+		}
+	}
+	return total
 }

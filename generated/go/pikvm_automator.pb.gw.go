@@ -279,7 +279,7 @@ func RegisterPiKvmAutomatorHandlerServer(ctx context.Context, mux *runtime.Serve
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/pikvm_automator.PiKvmAutomator/CallCommand", runtime.WithHTTPPathPattern("/command/call"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/pikvm_automator.PiKvmAutomator/CallCommand", runtime.WithHTTPPathPattern("/commands/call"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -304,7 +304,7 @@ func RegisterPiKvmAutomatorHandlerServer(ctx context.Context, mux *runtime.Serve
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/pikvm_automator.PiKvmAutomator/ManualCall", runtime.WithHTTPPathPattern("/command/manual"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/pikvm_automator.PiKvmAutomator/ManualCall", runtime.WithHTTPPathPattern("/commands/manual"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -465,7 +465,7 @@ func RegisterPiKvmAutomatorHandlerClient(ctx context.Context, mux *runtime.Serve
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/pikvm_automator.PiKvmAutomator/CallCommand", runtime.WithHTTPPathPattern("/command/call"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/pikvm_automator.PiKvmAutomator/CallCommand", runtime.WithHTTPPathPattern("/commands/call"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -487,7 +487,7 @@ func RegisterPiKvmAutomatorHandlerClient(ctx context.Context, mux *runtime.Serve
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/pikvm_automator.PiKvmAutomator/ManualCall", runtime.WithHTTPPathPattern("/command/manual"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/pikvm_automator.PiKvmAutomator/ManualCall", runtime.WithHTTPPathPattern("/commands/manual"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -575,9 +575,9 @@ func RegisterPiKvmAutomatorHandlerClient(ctx context.Context, mux *runtime.Serve
 var (
 	pattern_PiKvmAutomator_CommandList_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"command", "list"}, ""))
 
-	pattern_PiKvmAutomator_CallCommand_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"command", "call"}, ""))
+	pattern_PiKvmAutomator_CallCommand_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"commands", "call"}, ""))
 
-	pattern_PiKvmAutomator_ManualCall_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"command", "manual"}, ""))
+	pattern_PiKvmAutomator_ManualCall_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"commands", "manual"}, ""))
 
 	pattern_PiKvmAutomator_DeleteCommand_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1}, []string{"command", "id"}, ""))
 

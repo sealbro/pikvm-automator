@@ -2,6 +2,7 @@ package pikvm
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/sealbro/pikvm-automator/pkg/rand"
@@ -26,7 +27,7 @@ func NewPiKvmClient(logger *slog.Logger, config PiKvmConfig) *PiKvmClient {
 	}
 }
 
-func (c *PiKvmClient) Start(ctx context.Context, send <-chan []byte) (error, <-chan []byte) {
+func (c *PiKvmClient) Start(ctx context.Context, send <-chan PiKvmEvent) (error, <-chan []byte) {
 	u := url.URL{Scheme: "wss", Host: c.config.PiKvmHost, Path: "/api/ws", RawQuery: "stream=0"}
 	c.logger.Info("connecting to ", slog.String("url", u.String()))
 
@@ -82,7 +83,7 @@ func (c *PiKvmClient) receiveEvent(ctx context.Context, receive chan<- []byte) {
 	}
 }
 
-func (c *PiKvmClient) sendEvent(ctx context.Context, send <-chan []byte) {
+func (c *PiKvmClient) sendEvent(ctx context.Context, send <-chan PiKvmEvent) {
 	ticker := time.NewTicker(100 * time.Millisecond)
 	defer ticker.Stop()
 
@@ -90,12 +91,22 @@ func (c *PiKvmClient) sendEvent(ctx context.Context, send <-chan []byte) {
 		select {
 		case <-ctx.Done():
 			return
-		case data := <-send:
-			time.Sleep(time.Duration(c.rnd.Range(8, 24)) * time.Millisecond)
-			err := c.connection.WriteMessage(websocket.TextMessage, data)
+		case event := <-send:
+			data, err := json.Marshal(event)
+			if err != nil {
+				c.logger.ErrorContext(ctx, "marshal", slog.Any("err", err))
+				continue
+			}
+
+			// random delay
+			time.Sleep(time.Duration(c.rnd.Range(1, 5)) * time.Millisecond)
+
+			err = c.connection.WriteMessage(websocket.TextMessage, data)
 			if err != nil {
 				c.logger.ErrorContext(ctx, "write", slog.Any("err", err))
-				return
+				continue
+			} else {
+				c.logger.InfoContext(ctx, "send", slog.String("data", string(data)))
 			}
 		}
 	}

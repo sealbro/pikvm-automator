@@ -1,8 +1,8 @@
 package pikvm
 
-type PiKVMSentKeyEvent struct {
-	EventType EventType     `json:"event_type"`
-	Event     KeyboardEvent `json:"event"`
+type PiKvmEvent struct {
+	EventType EventType `json:"event_type"`
+	Event     any       `json:"event"`
 }
 
 type KeyboardEvent struct {

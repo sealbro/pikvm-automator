@@ -17,20 +17,20 @@ service PiKvmAutomator {
 
   rpc CommandList(CommandListRequest) returns (CommandListResponse) {
     option (google.api.http) = {
-      get: "/command/list"
+      get: "/commands"
     };
   }
 
   rpc CallCommand(CallCommandRequest) returns (CallCommandResponse) {
     option (google.api.http) = {
-      post: "/command/call"
+      post: "/commands/call"
       body: "*"
     };
   }
 
   rpc ManualCall(ManualCallRequest) returns (ManualCallResponse) {
     option (google.api.http) = {
-      post: "/command/manual"
+      post: "/commands/manual"
       body: "*"
     };
   }
@@ -63,6 +63,7 @@ message CommandListResponse {
 }
 
 message CallCommandRequest {
+  string expression = 1;
 }
 
 message CallCommandResponse {

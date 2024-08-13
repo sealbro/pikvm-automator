@@ -32,30 +32,6 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
-    /command/call:
-        post:
-            tags:
-                - PiKvmAutomator
-            operationId: PiKvmAutomator_CallCommand
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: '#/components/schemas/CallCommandRequest'
-                required: true
-            responses:
-                "200":
-                    description: OK
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/CallCommandResponse'
-                default:
-                    description: Default error response
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Status'
     /command/list:
         get:
             tags:
@@ -68,30 +44,6 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/CommandListResponse'
-                default:
-                    description: Default error response
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Status'
-    /command/manual:
-        post:
-            tags:
-                - PiKvmAutomator
-            operationId: PiKvmAutomator_ManualCall
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: '#/components/schemas/ManualCallRequest'
-                required: true
-            responses:
-                "200":
-                    description: OK
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/ManualCallResponse'
                 default:
                     description: Default error response
                     content:
@@ -151,11 +103,61 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
+    /commands/call:
+        post:
+            tags:
+                - PiKvmAutomator
+            operationId: PiKvmAutomator_CallCommand
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/CallCommandRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/CallCommandResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /commands/manual:
+        post:
+            tags:
+                - PiKvmAutomator
+            operationId: PiKvmAutomator_ManualCall
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/ManualCallRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ManualCallResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
 components:
     schemas:
         CallCommandRequest:
             type: object
-            properties: {}
+            properties:
+                expression:
+                    type: string
         CallCommandResponse:
             type: object
             properties: {}
