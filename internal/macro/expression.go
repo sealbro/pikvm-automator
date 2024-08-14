@@ -1,7 +1,9 @@
 package macro
 
 import (
-	"github.com/sealbro/pikvm-automator/pkg/pikvm"
+	"github.com/sealbro/pikvm-automator/pkg/pikvm/keyboard"
+	"github.com/sealbro/pikvm-automator/pkg/pikvm/mouse"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -9,7 +11,7 @@ import (
 )
 
 // Key [\w\d]+
-// Mouse @\d+\'\d+
+// MouseMove @\d+\'\d+
 // Delay \d+[sm]
 // Combinator \+
 // Splitter \|
@@ -24,7 +26,7 @@ const (
 	endGroup      = ')'
 	startRepeat   = '['
 	endRepeat     = ']'
-	mouse         = '@'
+	mousePrefix   = '@'
 	mouseSplitter = '\''
 	combinator    = '+'
 	splitter      = '|'
@@ -60,19 +62,19 @@ func (e *Expression) Parse() Group {
 
 		var startIndex = -1
 		for i := len(result) - 1; i >= 0; i-- {
-			if m, ok := result[i].(KeyEvent); ok {
+			if m, ok := result[i].(KeyPressEvent); ok {
 				if m.State {
 					startIndex = i
-					tempResult = append(tempResult, KeyEvent{Key: m.Key, State: false})
+					tempResult = append(tempResult, KeyPressEvent{Key: m.Key, State: false})
 				} else {
 					break
 				}
 			}
 		}
 
-		if len(current) > 0 {
-			result = append(result, KeyEvent{Key: pikvm.Key(current), State: true})
-			result = append(result, KeyEvent{Key: pikvm.Key(current), State: false})
+		if len(current) > 0 && slices.Contains(keyboard.Keys, keyboard.Key(current)) {
+			result = append(result, KeyPressEvent{Key: keyboard.Key(current), State: true})
+			result = append(result, KeyPressEvent{Key: keyboard.Key(current), State: false})
 		}
 		if len(tempResult) > 0 {
 			var bindMacro Bind
@@ -105,13 +107,15 @@ func (e *Expression) Parse() Group {
 	}
 
 	finishMouseEvent := func() {
-		if strings.Contains(current, string(mouseSplitter)) && len(current) > 0 {
+		if len(current) > 0 && strings.Contains(current, string(mouseSplitter)) {
 			split := strings.Split(current, string(mouseSplitter))
 			xtoi, _ := strconv.Atoi(split[0])
 			ytoi, _ := strconv.Atoi(split[1])
-			result = append(result, MouseEvent{X: xtoi, Y: ytoi})
+			result = append(result, MouseMoveEvent{X: xtoi, Y: ytoi})
 			current = empty
 		}
+
+		isMouseEvent = false
 	}
 
 	for _, letter := range e.exp {
@@ -141,7 +145,7 @@ func (e *Expression) Parse() Group {
 
 		if isKeyEvent {
 			if letter == combinator {
-				result = append(result, KeyEvent{Key: pikvm.Key(current), State: true})
+				result = append(result, KeyPressEvent{Key: keyboard.Key(current), State: true})
 				current = empty
 				isKeyEvent = false
 			} else if letter == splitter {
@@ -171,6 +175,24 @@ func (e *Expression) Parse() Group {
 		}
 
 		if isMouseEvent {
+			if letter == splitter {
+				finishMouseEvent()
+			}
+
+			if letter == 'l' {
+				result = append(result, MouseClickEvent{Button: mouse.Left, State: true})
+				result = append(result, MouseClickEvent{Button: mouse.Left, State: false})
+				isMouseEvent = false
+				skipLetter = 3 // skip 'eft'
+			}
+
+			if letter == 'r' {
+				result = append(result, MouseClickEvent{Button: mouse.Right, State: true})
+				result = append(result, MouseClickEvent{Button: mouse.Right, State: false})
+				isMouseEvent = false
+				skipLetter = 4 // skip 'ight'
+			}
+
 			if unicode.IsDigit(letter) || letter == mouseSplitter {
 				isMouseEvent = true
 				current += string(letter)
@@ -178,7 +200,7 @@ func (e *Expression) Parse() Group {
 			continue
 		}
 
-		if letter == mouse {
+		if letter == mousePrefix {
 			isMouseEvent = true
 			continue
 		}
@@ -226,6 +248,10 @@ func (e *Expression) String() string {
 }
 
 func compile(events []Macro) string {
+	if len(events) == 0 {
+		return empty
+	}
+
 	sb := strings.Builder{}
 
 	for i, m := range events {
@@ -240,18 +266,26 @@ func compile(events []Macro) string {
 				sb.WriteString(strconv.Itoa(int(milliseconds)))
 				sb.WriteString("ms")
 			}
-		case KeyEvent:
+		case KeyPressEvent:
 			if v.State {
 				sb.WriteString(string(v.Key))
 			} else {
 				// skip splitter
 				continue
 			}
-		case MouseEvent:
-			sb.WriteString(string(mouse))
+		case MouseMoveEvent:
+			sb.WriteString(string(mousePrefix))
 			sb.WriteString(strconv.Itoa(v.X))
 			sb.WriteString(string(mouseSplitter))
 			sb.WriteString(strconv.Itoa(v.Y))
+		case MouseClickEvent:
+			if v.State {
+				sb.WriteString(string(mousePrefix))
+				sb.WriteString(string(v.Button))
+			} else {
+				// skip splitter
+				continue
+			}
 		case Repeat:
 			sb.WriteString(string(startRepeat))
 			sb.WriteString(strconv.Itoa(v.Repeats))

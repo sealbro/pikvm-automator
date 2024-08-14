@@ -1,7 +1,8 @@
 package macro
 
 import (
-	"github.com/sealbro/pikvm-automator/pkg/pikvm"
+	"github.com/sealbro/pikvm-automator/pkg/pikvm/keyboard"
+	"github.com/sealbro/pikvm-automator/pkg/pikvm/mouse"
 	"time"
 )
 
@@ -12,14 +13,19 @@ type Delay struct {
 	Time time.Duration
 }
 
-type KeyEvent struct {
-	Key   pikvm.Key
+type KeyPressEvent struct {
+	Key   keyboard.Key
 	State bool
 }
 
-type MouseEvent struct {
+type MouseMoveEvent struct {
 	X int
 	Y int
+}
+
+type MouseClickEvent struct {
+	Button mouse.Button
+	State  bool
 }
 
 type Repeat struct {

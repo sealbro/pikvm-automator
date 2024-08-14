@@ -6,8 +6,11 @@ func TestExpression_SimpleParse(t *testing.T) {
 	expressions := []string{
 		"1ms",
 		"2s",
+		"@left|@right",
+		"@0'0|@left|@920'560|@left|@200'200|@right",
 		"MetaLeft",
 		"MetaLeft|@12'21",
+		"@0'0|@12'21|@222'222",
 		"MetaLeft+KeyD",
 		"MetaLeft+KeyD+1ms|KeyC+KeyV+10ms",
 		"MetaLeft+2ms+KeyD+1ms",

@@ -60,7 +60,7 @@ func main() {
 			if closed {
 				return
 			}
-			logger.Debug("receive", slog.String("bytes", string(bytes)))
+			logger.DebugContext(ctx, "receive", slog.String("data", string(bytes)))
 		}
 	}()
 
