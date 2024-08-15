@@ -56,8 +56,9 @@ func main() {
 
 	go func() {
 		for {
-			bytes, closed := <-receive
-			if closed {
+			bytes, ok := <-receive
+			if !ok {
+				logger.InfoContext(ctx, "receive closed")
 				return
 			}
 			logger.DebugContext(ctx, "receive", slog.String("data", string(bytes)))

@@ -57,37 +57,6 @@ func (e *Expression) Parse() Group {
 	var current = empty
 	skipLetter := 0
 
-	finishKeyEvent := func() {
-		var tempResult []Macro
-
-		var startIndex = -1
-		for i := len(result) - 1; i >= 0; i-- {
-			if m, ok := result[i].(KeyPressEvent); ok {
-				if m.State {
-					startIndex = i
-					tempResult = append(tempResult, KeyPressEvent{Key: m.Key, State: false})
-				} else {
-					break
-				}
-			}
-		}
-
-		if len(current) > 0 && slices.Contains(keyboard.Keys, keyboard.Key(current)) {
-			result = append(result, KeyPressEvent{Key: keyboard.Key(current), State: true})
-			result = append(result, KeyPressEvent{Key: keyboard.Key(current), State: false})
-		}
-		if len(tempResult) > 0 {
-			var bindMacro Bind
-			bindMacro.Events = append(bindMacro.Events, result[startIndex:]...)
-			bindMacro.Events = append(bindMacro.Events, tempResult...)
-
-			result = append(make([]Macro, 0), result[:startIndex]...)
-			result = append(result, bindMacro)
-		}
-		current = empty
-		isKeyEvent = false
-	}
-
 	finishGroup := func() {
 		var repeatGroup Repeat
 		startIndex := -1
@@ -106,7 +75,54 @@ func (e *Expression) Parse() Group {
 		}
 	}
 
-	finishMouseEvent := func() {
+	finishBind := func() {
+		var tempResult []Macro
+
+		var startIndex = -1
+		for i := len(result) - 1; i >= 0; i-- {
+			if m, ok := result[i].(MouseClickEvent); ok {
+				if m.State {
+					startIndex = i
+					tempResult = append(tempResult, MouseClickEvent{Button: m.Button, State: false})
+				} else {
+					break
+				}
+			}
+			if m, ok := result[i].(KeyPressEvent); ok {
+				if m.State {
+					startIndex = i
+					tempResult = append(tempResult, KeyPressEvent{Key: m.Key, State: false})
+				} else {
+					break
+				}
+			}
+		}
+
+		if len(current) > 0 && slices.Contains(keyboard.Keys, keyboard.Key(current)) {
+			result = append(result, KeyPressEvent{Key: keyboard.Key(current), State: true})
+			result = append(result, KeyPressEvent{Key: keyboard.Key(current), State: false})
+		}
+
+		if len(tempResult) > 0 {
+			var bindMacro Bind
+			expectedBind := result[startIndex:]
+			if len(expectedBind) > 1 {
+				bindMacro.Events = append(bindMacro.Events, expectedBind...)
+				bindMacro.Events = append(bindMacro.Events, tempResult...)
+
+				result = append(make([]Macro, 0), result[:startIndex]...)
+				result = append(result, bindMacro)
+			} else {
+				result = append(result, tempResult...)
+			}
+		}
+
+		current = empty
+		isMouseEvent = false
+		isKeyEvent = false
+	}
+
+	finishMouseMoveEvent := func() {
 		if len(current) > 0 && strings.Contains(current, string(mouseSplitter)) {
 			split := strings.Split(current, string(mouseSplitter))
 			xtoi, _ := strconv.Atoi(split[0])
@@ -121,6 +137,12 @@ func (e *Expression) Parse() Group {
 	for _, letter := range e.exp {
 		if skipLetter > 0 {
 			skipLetter--
+			continue
+		}
+
+		if letter == splitter {
+			finishMouseMoveEvent()
+			finishBind()
 			continue
 		}
 
@@ -143,28 +165,11 @@ func (e *Expression) Parse() Group {
 			continue
 		}
 
-		if isKeyEvent {
-			if letter == combinator {
-				result = append(result, KeyPressEvent{Key: keyboard.Key(current), State: true})
-				current = empty
-				isKeyEvent = false
-			} else if letter == splitter {
-				finishKeyEvent()
-				current = empty
-				isKeyEvent = false
-			} else {
-				current += string(letter)
-			}
-			continue
-		}
-
 		if isRepeat {
 			if unicode.IsDigit(letter) {
 				isRepeat = true
 				current += string(letter)
-			}
-
-			if letter == endRepeat {
+			} else if letter == endRepeat {
 				atoi, _ := strconv.Atoi(current)
 				result = append(result, Repeat{Repeats: atoi})
 				current = empty
@@ -174,26 +179,31 @@ func (e *Expression) Parse() Group {
 			continue
 		}
 
-		if isMouseEvent {
-			if letter == splitter {
-				finishMouseEvent()
+		if isKeyEvent {
+			if letter == combinator {
+				result = append(result, KeyPressEvent{Key: keyboard.Key(current), State: true})
+				current = empty
+				isKeyEvent = false
+			} else {
+				current += string(letter)
 			}
+			continue
+		}
 
-			if letter == 'l' {
+		if isMouseEvent {
+			if letter == combinator {
+				finishMouseMoveEvent()
+				current = empty
+				isMouseEvent = false
+			} else if letter == 'l' {
 				result = append(result, MouseClickEvent{Button: mouse.Left, State: true})
-				result = append(result, MouseClickEvent{Button: mouse.Left, State: false})
 				isMouseEvent = false
 				skipLetter = 3 // skip 'eft'
-			}
-
-			if letter == 'r' {
+			} else if letter == 'r' {
 				result = append(result, MouseClickEvent{Button: mouse.Right, State: true})
-				result = append(result, MouseClickEvent{Button: mouse.Right, State: false})
 				isMouseEvent = false
 				skipLetter = 4 // skip 'ight'
-			}
-
-			if unicode.IsDigit(letter) || letter == mouseSplitter {
+			} else if unicode.IsDigit(letter) || letter == mouseSplitter {
 				isMouseEvent = true
 				current += string(letter)
 			}
@@ -205,15 +215,9 @@ func (e *Expression) Parse() Group {
 			continue
 		}
 
-		if letter == splitter {
-			finishMouseEvent()
-			finishKeyEvent()
-			continue
-		}
-
 		if letter == endGroup {
-			finishMouseEvent()
-			finishKeyEvent()
+			finishMouseMoveEvent()
+			finishBind()
 			finishGroup()
 			continue
 		}
@@ -236,8 +240,8 @@ func (e *Expression) Parse() Group {
 		}
 	}
 
-	finishMouseEvent()
-	finishKeyEvent()
+	finishMouseMoveEvent()
+	finishBind()
 
 	e.events = result
 	return Group{Events: append(make([]Macro, 0), e.events...)}

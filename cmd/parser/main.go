@@ -7,8 +7,10 @@ import (
 
 func main() {
 	expressions := []string{
-		"@left|@right",
-		"@0'0|@left|@920'560|@left|@200'200|@right",
+		//"@left|@right",
+		"@left+@200'100+1s+@920'560+1s+@200'200",
+		"@left+@200'100+1s+@920'560+1s+@200'200|@right+1s+MetaLeft+KeyD+@0'0+@920'560+@200'200",
+		//"@0'0|@920'560|@left|@200'200|@right",
 		//"1ms",
 		//"2s",
 		//"MetaLeft",

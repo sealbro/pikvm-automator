@@ -7,6 +7,7 @@ func TestExpression_SimpleParse(t *testing.T) {
 		"1ms",
 		"2s",
 		"@left|@right",
+		"@left+@0'0+@920'560+@200'200|@right",
 		"@0'0|@left|@920'560|@left|@200'200|@right",
 		"MetaLeft",
 		"MetaLeft|@12'21",

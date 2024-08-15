@@ -43,18 +43,17 @@ func (c *PiKvmClient) Start(ctx context.Context, send <-chan PiKvmEvent) (error,
 	return nil, receive
 }
 
-func (c *PiKvmClient) stop(ctx context.Context) error {
+func (c *PiKvmClient) stop(ctx context.Context) {
 	<-ctx.Done()
 	if c.connection != nil {
 		err := c.connection.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 		if err != nil {
-			return fmt.Errorf("pikvm write close: %w", err)
+			c.logger.ErrorContext(ctx, "stop", slog.Any("err", err))
+			return
 		}
 		_ = c.connection.Close()
 		c.connection = nil
-		return nil
 	}
-	return nil
 }
 
 func (c *PiKvmClient) receiveEvent(ctx context.Context, receive chan<- []byte) {
@@ -68,7 +67,7 @@ func (c *PiKvmClient) receiveEvent(ctx context.Context, receive chan<- []byte) {
 		case <-ticker.C:
 			_, message, err := c.connection.ReadMessage()
 			if err != nil {
-				c.logger.ErrorContext(ctx, "read", slog.Any("err", err))
+				c.logger.ErrorContext(ctx, "receiveEvent", slog.Any("err", err))
 				return
 			}
 			receive <- message
@@ -129,14 +128,14 @@ func (c *PiKvmClient) reconnect() error {
 	httpHeader.Add("X-KVMD-Passwd", c.config.PiKvmPassword)
 
 	u := url.URL{Scheme: "wss", Host: c.config.PiKvmHost, Path: "/api/ws", RawQuery: "stream=0"}
-	c.logger.Info("connecting to ", slog.String("url", u.String()))
+	c.logger.Info("connecting to", slog.String("url", u.String()))
 
 	conn, _, err := websocket.DefaultDialer.Dial(u.String(), httpHeader)
 	if err != nil {
 		return fmt.Errorf("pikvm dial: %w", err)
 	}
 
-	c.logger.Info("connected to ", slog.String("url", u.String()))
+	c.logger.Info("connected to", slog.String("url", u.String()))
 	c.connection = conn
 
 	return nil
