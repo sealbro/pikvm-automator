@@ -32,54 +32,7 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
-    /command/list:
-        get:
-            tags:
-                - PiKvmAutomator
-            operationId: PiKvmAutomator_CommandList
-            responses:
-                "200":
-                    description: OK
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/CommandListResponse'
-                default:
-                    description: Default error response
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Status'
     /command/{id}:
-        post:
-            tags:
-                - PiKvmAutomator
-            operationId: PiKvmAutomator_UpdateCommand
-            parameters:
-                - name: id
-                  in: path
-                  required: true
-                  schema:
-                    type: string
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: '#/components/schemas/UpdateCommandRequest'
-                required: true
-            responses:
-                "200":
-                    description: OK
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/UpdateCommandResponse'
-                default:
-                    description: Default error response
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Status'
         delete:
             tags:
                 - PiKvmAutomator
@@ -97,6 +50,24 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/DeleteCommandResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /commands:
+        get:
+            tags:
+                - PiKvmAutomator
+            operationId: PiKvmAutomator_CommandList
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/CommandListResponse'
                 default:
                     description: Default error response
                     content:
@@ -127,30 +98,6 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
-    /commands/manual:
-        post:
-            tags:
-                - PiKvmAutomator
-            operationId: PiKvmAutomator_ManualCall
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: '#/components/schemas/ManualCallRequest'
-                required: true
-            responses:
-                "200":
-                    description: OK
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/ManualCallResponse'
-                default:
-                    description: Default error response
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/Status'
 components:
     schemas:
         CallCommandRequest:
@@ -161,12 +108,34 @@ components:
         CallCommandResponse:
             type: object
             properties: {}
+        Command:
+            type: object
+            properties:
+                id:
+                    type: string
+                description:
+                    type: string
+                expression:
+                    type: string
+                createdAt:
+                    type: string
+                    format: date-time
         CommandListResponse:
             type: object
-            properties: {}
+            properties:
+                commands:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/Command'
         CreateCommandRequest:
             type: object
-            properties: {}
+            properties:
+                id:
+                    type: string
+                description:
+                    type: string
+                expression:
+                    type: string
         CreateCommandResponse:
             type: object
             properties: {}
@@ -181,12 +150,6 @@ components:
                     description: The type of the serialized message.
             additionalProperties: true
             description: Contains an arbitrary serialized message along with a @type that describes the type of the serialized message.
-        ManualCallRequest:
-            type: object
-            properties: {}
-        ManualCallResponse:
-            type: object
-            properties: {}
         Status:
             type: object
             properties:
@@ -203,13 +166,5 @@ components:
                         $ref: '#/components/schemas/GoogleProtobufAny'
                     description: A list of messages that carry the error details.  There is a common set of message types for APIs to use.
             description: 'The `Status` type defines a logical error model that is suitable for different programming environments, including REST APIs and RPC APIs. It is used by [gRPC](https://github.com/grpc). Each `Status` message contains three pieces of data: error code, error message, and error details. You can find out more about this error model and how to work with it in the [API Design Guide](https://cloud.google.com/apis/design/errors).'
-        UpdateCommandRequest:
-            type: object
-            properties:
-                id:
-                    type: string
-        UpdateCommandResponse:
-            type: object
-            properties: {}
 tags:
     - name: PiKvmAutomator

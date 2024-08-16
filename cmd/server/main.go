@@ -34,14 +34,6 @@ func main() {
 
 	piKvmClient := pikvm.NewPiKvmClient(logger, conf.PiKvmConfig)
 
-	//// TODO: Move to stab return commands
-	//keys := []pikvm.PiKVMSentKeyEvent{
-	//	{EventType: pikvm.Keyboard, Event: pikvm.KeyboardEvent{Key: pikvm.MetaLeft, State: true}},
-	//	{EventType: pikvm.Keyboard, Event: pikvm.KeyboardEvent{Key: pikvm.KeyD, State: true}},
-	//	{EventType: pikvm.Keyboard, Event: pikvm.KeyboardEvent{Key: pikvm.KeyD, State: false}},
-	//	{EventType: pikvm.Keyboard, Event: pikvm.KeyboardEvent{Key: pikvm.MetaLeft, State: false}},
-	//}
-
 	player := queue.NewExpressionPlayer(logger)
 	sent := player.Play(ctx)
 

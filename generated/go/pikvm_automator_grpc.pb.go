@@ -21,10 +21,8 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	PiKvmAutomator_CommandList_FullMethodName   = "/pikvm_automator.PiKvmAutomator/CommandList"
 	PiKvmAutomator_CallCommand_FullMethodName   = "/pikvm_automator.PiKvmAutomator/CallCommand"
-	PiKvmAutomator_ManualCall_FullMethodName    = "/pikvm_automator.PiKvmAutomator/ManualCall"
 	PiKvmAutomator_DeleteCommand_FullMethodName = "/pikvm_automator.PiKvmAutomator/DeleteCommand"
 	PiKvmAutomator_CreateCommand_FullMethodName = "/pikvm_automator.PiKvmAutomator/CreateCommand"
-	PiKvmAutomator_UpdateCommand_FullMethodName = "/pikvm_automator.PiKvmAutomator/UpdateCommand"
 )
 
 // PiKvmAutomatorClient is the client API for PiKvmAutomator service.
@@ -33,10 +31,8 @@ const (
 type PiKvmAutomatorClient interface {
 	CommandList(ctx context.Context, in *CommandListRequest, opts ...grpc.CallOption) (*CommandListResponse, error)
 	CallCommand(ctx context.Context, in *CallCommandRequest, opts ...grpc.CallOption) (*CallCommandResponse, error)
-	ManualCall(ctx context.Context, in *ManualCallRequest, opts ...grpc.CallOption) (*ManualCallResponse, error)
 	DeleteCommand(ctx context.Context, in *DeleteCommandRequest, opts ...grpc.CallOption) (*DeleteCommandResponse, error)
 	CreateCommand(ctx context.Context, in *CreateCommandRequest, opts ...grpc.CallOption) (*CreateCommandResponse, error)
-	UpdateCommand(ctx context.Context, in *UpdateCommandRequest, opts ...grpc.CallOption) (*UpdateCommandResponse, error)
 }
 
 type piKvmAutomatorClient struct {
@@ -67,16 +63,6 @@ func (c *piKvmAutomatorClient) CallCommand(ctx context.Context, in *CallCommandR
 	return out, nil
 }
 
-func (c *piKvmAutomatorClient) ManualCall(ctx context.Context, in *ManualCallRequest, opts ...grpc.CallOption) (*ManualCallResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ManualCallResponse)
-	err := c.cc.Invoke(ctx, PiKvmAutomator_ManualCall_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *piKvmAutomatorClient) DeleteCommand(ctx context.Context, in *DeleteCommandRequest, opts ...grpc.CallOption) (*DeleteCommandResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DeleteCommandResponse)
@@ -97,26 +83,14 @@ func (c *piKvmAutomatorClient) CreateCommand(ctx context.Context, in *CreateComm
 	return out, nil
 }
 
-func (c *piKvmAutomatorClient) UpdateCommand(ctx context.Context, in *UpdateCommandRequest, opts ...grpc.CallOption) (*UpdateCommandResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(UpdateCommandResponse)
-	err := c.cc.Invoke(ctx, PiKvmAutomator_UpdateCommand_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // PiKvmAutomatorServer is the server API for PiKvmAutomator service.
 // All implementations must embed UnimplementedPiKvmAutomatorServer
 // for forward compatibility.
 type PiKvmAutomatorServer interface {
 	CommandList(context.Context, *CommandListRequest) (*CommandListResponse, error)
 	CallCommand(context.Context, *CallCommandRequest) (*CallCommandResponse, error)
-	ManualCall(context.Context, *ManualCallRequest) (*ManualCallResponse, error)
 	DeleteCommand(context.Context, *DeleteCommandRequest) (*DeleteCommandResponse, error)
 	CreateCommand(context.Context, *CreateCommandRequest) (*CreateCommandResponse, error)
-	UpdateCommand(context.Context, *UpdateCommandRequest) (*UpdateCommandResponse, error)
 	mustEmbedUnimplementedPiKvmAutomatorServer()
 }
 
@@ -133,17 +107,11 @@ func (UnimplementedPiKvmAutomatorServer) CommandList(context.Context, *CommandLi
 func (UnimplementedPiKvmAutomatorServer) CallCommand(context.Context, *CallCommandRequest) (*CallCommandResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CallCommand not implemented")
 }
-func (UnimplementedPiKvmAutomatorServer) ManualCall(context.Context, *ManualCallRequest) (*ManualCallResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ManualCall not implemented")
-}
 func (UnimplementedPiKvmAutomatorServer) DeleteCommand(context.Context, *DeleteCommandRequest) (*DeleteCommandResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteCommand not implemented")
 }
 func (UnimplementedPiKvmAutomatorServer) CreateCommand(context.Context, *CreateCommandRequest) (*CreateCommandResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateCommand not implemented")
-}
-func (UnimplementedPiKvmAutomatorServer) UpdateCommand(context.Context, *UpdateCommandRequest) (*UpdateCommandResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateCommand not implemented")
 }
 func (UnimplementedPiKvmAutomatorServer) mustEmbedUnimplementedPiKvmAutomatorServer() {}
 func (UnimplementedPiKvmAutomatorServer) testEmbeddedByValue()                        {}
@@ -202,24 +170,6 @@ func _PiKvmAutomator_CallCommand_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PiKvmAutomator_ManualCall_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ManualCallRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(PiKvmAutomatorServer).ManualCall(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: PiKvmAutomator_ManualCall_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PiKvmAutomatorServer).ManualCall(ctx, req.(*ManualCallRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _PiKvmAutomator_DeleteCommand_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteCommandRequest)
 	if err := dec(in); err != nil {
@@ -256,24 +206,6 @@ func _PiKvmAutomator_CreateCommand_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PiKvmAutomator_UpdateCommand_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateCommandRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(PiKvmAutomatorServer).UpdateCommand(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: PiKvmAutomator_UpdateCommand_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PiKvmAutomatorServer).UpdateCommand(ctx, req.(*UpdateCommandRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // PiKvmAutomator_ServiceDesc is the grpc.ServiceDesc for PiKvmAutomator service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -290,20 +222,12 @@ var PiKvmAutomator_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _PiKvmAutomator_CallCommand_Handler,
 		},
 		{
-			MethodName: "ManualCall",
-			Handler:    _PiKvmAutomator_ManualCall_Handler,
-		},
-		{
 			MethodName: "DeleteCommand",
 			Handler:    _PiKvmAutomator_DeleteCommand_Handler,
 		},
 		{
 			MethodName: "CreateCommand",
 			Handler:    _PiKvmAutomator_CreateCommand_Handler,
-		},
-		{
-			MethodName: "UpdateCommand",
-			Handler:    _PiKvmAutomator_UpdateCommand_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

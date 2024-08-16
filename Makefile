@@ -15,6 +15,7 @@ generate_grpc: ### generate grpc
 	cd ./proto && \
 	buf dep update && \
 	buf generate
+	sed -i '' -e 's/https:\/\/localhost/http:\/\/localhost/g' generated/openapiv3/openapi.yaml
 .PHONY: generate_grpc
 
 deps: ### install dependencies

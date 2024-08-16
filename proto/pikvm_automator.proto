@@ -28,13 +28,6 @@ service PiKvmAutomator {
     };
   }
 
-  rpc ManualCall(ManualCallRequest) returns (ManualCallResponse) {
-    option (google.api.http) = {
-      post: "/commands/manual"
-      body: "*"
-    };
-  }
-
   rpc DeleteCommand(DeleteCommandRequest) returns (DeleteCommandResponse) {
     option (google.api.http) = {
       delete: "/command/{id}"
@@ -47,19 +40,13 @@ service PiKvmAutomator {
       body: "*"
     };
   }
-
-  rpc UpdateCommand(UpdateCommandRequest) returns (UpdateCommandResponse) {
-    option (google.api.http) = {
-      post: "/command/{id}"
-      body: "*"
-    };
-  }
 }
 
 message CommandListRequest {
 }
 
 message CommandListResponse {
+  repeated Command commands = 1;
 }
 
 message CallCommandRequest {
@@ -76,21 +63,18 @@ message DeleteCommandRequest {
 message DeleteCommandResponse {
 }
 
-message ManualCallRequest {
-}
-
-message ManualCallResponse {
-}
-
 message CreateCommandRequest {
+  string id = 1;
+  string description = 2;
+  string expression = 3;
 }
 
 message CreateCommandResponse {
 }
 
-message UpdateCommandRequest {
+message Command {
   string id = 1;
-}
-
-message UpdateCommandResponse {
+  string description = 2;
+  string expression = 3;
+  google.protobuf.Timestamp created_at = 4;
 }
