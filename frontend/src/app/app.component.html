@@ -1,0 +1,21 @@
+
+<mat-toolbar>
+  <button mat-icon-button class="icon" aria-label="Menu" (click)="drawer.toggle()">
+    <mat-icon>menu</mat-icon>
+  </button>
+  <span>PiKVM Automator</span>
+  <span class="spacer"></span>
+</mat-toolbar>
+
+<mat-drawer-container class="container" autosize>
+  <mat-drawer #drawer class="sidenav" mode="side">
+    <mat-list>
+      <mat-list-item><a routerLink="/list" routerLinkActive="active" ariaCurrentWhenActive="page">Commands list</a></mat-list-item>
+    </mat-list>
+  </mat-drawer>
+  <div class="sidenav-content">
+    <router-outlet />
+  </div>
+</mat-drawer-container>
+
+
