@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/sealbro/pikvm-automator/frontend"
 	gen "github.com/sealbro/pikvm-automator/generated/go"
 	"github.com/sealbro/pikvm-automator/internal/config"
 	"github.com/sealbro/pikvm-automator/internal/grpc_ext"
@@ -62,6 +63,7 @@ func main() {
 	grpc_ext.NewGRPC(logger, conf.GatewayConfig).
 		AddHTTPGateway(conf.GrpcGatewayAddress).
 		AddServerImplementation(func(registrar grpc.ServiceRegistrar, mux *runtime.ServeMux) error {
+			frontend.AddFrontend(mux)
 			gen.RegisterPiKvmAutomatorServer(registrar, automatorServer)
 			opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
 			return gen.RegisterPiKvmAutomatorHandlerFromEndpoint(ctx, mux, conf.GrpcAddress, opts)

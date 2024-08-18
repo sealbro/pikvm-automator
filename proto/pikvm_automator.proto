@@ -17,26 +17,26 @@ service PiKvmAutomator {
 
   rpc CommandList(CommandListRequest) returns (CommandListResponse) {
     option (google.api.http) = {
-      get: "/commands"
+      get: "/api/commands"
     };
   }
 
   rpc CallCommand(CallCommandRequest) returns (CallCommandResponse) {
     option (google.api.http) = {
-      post: "/commands/call"
+      post: "/api/commands/call"
       body: "*"
     };
   }
 
   rpc DeleteCommand(DeleteCommandRequest) returns (DeleteCommandResponse) {
     option (google.api.http) = {
-      delete: "/command/{id}"
+      delete: "/api/command/{id}"
     };
   }
 
   rpc CreateCommand(CreateCommandRequest) returns (CreateCommandResponse) {
     option (google.api.http) = {
-      put: "/command"
+      put: "/api/command"
       body: "*"
     };
   }

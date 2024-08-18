@@ -1,4 +1,6 @@
-import {Component} from '@angular/core';
+import {NgModule} from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {provideHttpClient, withInterceptorsFromDi} from "@angular/common/http";
 import {RouterLink, RouterLinkActive, RouterOutlet} from "@angular/router";
 import {MatToolbarModule} from "@angular/material/toolbar";
 import {MatButtonModule} from "@angular/material/button";
@@ -6,16 +8,13 @@ import {MatIconModule} from "@angular/material/icon";
 import {MatSidenavModule} from "@angular/material/sidenav";
 import {MatListModule} from "@angular/material/list";
 
-@Component({
-  selector: 'app-root',
-  standalone: true,
+@NgModule({
+  declarations: [],
+  providers: [provideHttpClient(withInterceptorsFromDi())],
   imports: [
-    RouterOutlet, RouterLink, RouterLinkActive,
-    MatToolbarModule, MatButtonModule, MatIconModule, MatSidenavModule, MatListModule
-  ],
-  templateUrl: './app.component.html',
-  styleUrl: './app.component.scss'
+    CommonModule,
+
+  ]
 })
-export class AppComponent {
-  title = 'pikvm-automator';
+export class AppModule {
 }

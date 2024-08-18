@@ -1,1 +1,7 @@
-<p>list works!</p>
+<mat-list *ngFor="let cmd of commands">
+  <mat-list-item>
+    <h3 matLine>{{cmd.id}}</h3>
+    <p matLine>{{cmd.description}}</p>
+    <code matLine>{{cmd.expression}}</code>
+  </mat-list-item>
+</mat-list>

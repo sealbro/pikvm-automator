@@ -8,7 +8,7 @@ info:
 servers:
     - url: http://localhost:8032
 paths:
-    /command:
+    /api/command:
         put:
             tags:
                 - PiKvmAutomator
@@ -32,7 +32,7 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
-    /command/{id}:
+    /api/command/{id}:
         delete:
             tags:
                 - PiKvmAutomator
@@ -56,7 +56,7 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
-    /commands:
+    /api/commands:
         get:
             tags:
                 - PiKvmAutomator
@@ -74,7 +74,7 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
-    /commands/call:
+    /api/commands/call:
         post:
             tags:
                 - PiKvmAutomator
