@@ -2,6 +2,7 @@ package pikvm
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -130,6 +131,11 @@ func (c *PiKvmClient) reconnect() error {
 	u := url.URL{Scheme: "wss", Host: c.config.PiKvmHost, Path: "/api/ws", RawQuery: "stream=0"}
 	c.logger.Info("connecting to", slog.String("url", u.String()))
 
+	if c.config.SkipVerify {
+		websocket.DefaultDialer.TLSClientConfig = &tls.Config{
+			InsecureSkipVerify: true,
+		}
+	}
 	conn, _, err := websocket.DefaultDialer.Dial(u.String(), httpHeader)
 	if err != nil {
 		return fmt.Errorf("pikvm dial: %w", err)
