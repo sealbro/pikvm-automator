@@ -9,6 +9,7 @@ import (
 	"github.com/sealbro/pikvm-automator/internal/grpc_ext"
 	"github.com/sealbro/pikvm-automator/internal/queue"
 	"github.com/sealbro/pikvm-automator/internal/server"
+	"github.com/sealbro/pikvm-automator/internal/storage"
 	"github.com/sealbro/pikvm-automator/pkg/pikvm"
 	"github.com/sethvargo/go-envconfig"
 	"google.golang.org/grpc"
@@ -58,7 +59,8 @@ func main() {
 		}
 	}()
 
-	automatorServer := server.NewPiKvmAutomatorServer(player)
+	commandRepository := storage.NewCommandRepository(conf.CommandsPath)
+	automatorServer := server.NewPiKvmAutomatorServer(player, commandRepository)
 
 	grpc_ext.NewGRPC(logger, conf.GatewayConfig).
 		AddHTTPGateway(conf.GrpcGatewayAddress).

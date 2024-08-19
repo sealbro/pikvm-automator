@@ -117,9 +117,6 @@ components:
                     type: string
                 expression:
                     type: string
-                createdAt:
-                    type: string
-                    format: date-time
         CommandListResponse:
             type: object
             properties:

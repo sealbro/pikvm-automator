@@ -8,4 +8,5 @@ import (
 type PiKvmAutomatorConfig struct {
 	pikvm.PiKvmConfig
 	grpc_ext.GatewayConfig
+	CommandsPath string `env:"COMMANDS_PATH, default=commands.yaml"`
 }

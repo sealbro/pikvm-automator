@@ -15,6 +15,5 @@ export interface Command {
     id?: string;
     description?: string;
     expression?: string;
-    createdAt?: string;
 }
 
