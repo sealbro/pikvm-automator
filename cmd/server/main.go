@@ -59,7 +59,7 @@ func main() {
 	}()
 
 	commandRepository := storage.NewCommandRepository(conf.CommandsPath)
-	automatorServer := server.NewPiKvmAutomatorServer(player, commandRepository)
+	automatorServer := server.NewPiKvmAutomatorServer(logger, player, commandRepository)
 
 	grpc_ext.NewGRPC(logger, conf.GatewayConfig).
 		AddHTTPGateway(conf.GrpcGatewayAddress).
