@@ -97,9 +97,10 @@ func (c *PiKvmClient) sendEvent(ctx context.Context, send <-chan PiKvmEvent) {
 			err = c.connection.WriteMessage(websocket.TextMessage, data)
 			if err != nil {
 				if errors.Is(err, syscall.EPIPE) {
+					c.logger.WarnContext(ctx, "reconnecting...", slog.Any("err", err))
 					err = c.reconnect()
 					if err != nil {
-						c.logger.ErrorContext(ctx, "reconnect", slog.Any("err", err))
+						c.logger.ErrorContext(ctx, "reconnect failed", slog.Any("err", err))
 						return
 					}
 
@@ -140,9 +141,32 @@ func (c *PiKvmClient) reconnect() error {
 	if err != nil {
 		return fmt.Errorf("pikvm dial: %w", err)
 	}
+	keepAlive(conn, 30*time.Second)
 
 	c.logger.Info("connected to", slog.String("url", u.String()))
 	c.connection = conn
 
 	return nil
+}
+
+func keepAlive(c *websocket.Conn, timeout time.Duration) {
+	lastResponse := time.Now()
+	c.SetPongHandler(func(msg string) error {
+		lastResponse = time.Now()
+		return nil
+	})
+
+	go func() {
+		for {
+			err := c.WriteMessage(websocket.PingMessage, []byte("{\"event_type\": \"ping\", \"event\": {}}"))
+			if err != nil {
+				return
+			}
+			time.Sleep(timeout / 2)
+			if time.Since(lastResponse) > timeout {
+				_ = c.Close()
+				return
+			}
+		}
+	}()
 }
