@@ -1,5 +1,6 @@
 package keyboard
 
+// Key see official docs https://github.com/pikvm/kvmd/blob/d7675cdf231896851c492e1e0e719d2ccdc28082/hid/arduino/lib/drivers/usb-keymap.h
 type Key string
 
 var Keys = []Key{

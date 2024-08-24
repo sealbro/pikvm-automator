@@ -15,6 +15,7 @@ import (
 	"time"
 )
 
+// PiKvmClient is a client for PiKVM see expected events https://docs.pikvm.org/api/#websocket-events
 type PiKvmClient struct {
 	config     PiKvmConfig
 	logger     *slog.Logger

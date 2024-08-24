@@ -30,9 +30,6 @@ func main() {
 		return
 	}
 
-	// https://docs.pikvm.org/api/#websocket-events
-	// https://github.com/pikvm/kvmd/blob/d7675cdf231896851c492e1e0e719d2ccdc28082/hid/arduino/lib/drivers/usb-keymap.h
-
 	piKvmClient := pikvm.NewPiKvmClient(logger, conf.PiKvmConfig)
 
 	player := queue.NewExpressionPlayer(logger)
@@ -59,7 +56,7 @@ func main() {
 	}()
 
 	commandRepository := storage.NewCommandRepository(conf.CommandsPath)
-	automatorServer := server.NewPiKvmAutomatorServer(logger, player, commandRepository)
+	automatorServer := server.NewPiKvmAutomatorServer(logger, player, commandRepository, conf)
 
 	grpc_ext.NewGRPC(logger, conf.GatewayConfig).
 		AddHTTPGateway(conf.GrpcGatewayAddress).

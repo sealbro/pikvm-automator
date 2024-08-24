@@ -8,5 +8,7 @@ import (
 type PiKvmAutomatorConfig struct {
 	pikvm.PiKvmConfig
 	grpc_ext.GatewayConfig
-	CommandsPath string `env:"COMMANDS_PATH, default=commands.yaml"`
+	CommandsPath        string `env:"COMMANDS_PATH, default=commands.yaml"`
+	TemplateMaxDeep     int    `env:"TEMPLATE_MAX_DEEP, default=10"`
+	CallDebounceSeconds int    `env:"CALL_DEBOUNCE_SECONDS, default=2"`
 }

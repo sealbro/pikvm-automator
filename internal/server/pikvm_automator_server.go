@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	gen "github.com/sealbro/pikvm-automator/generated/go"
+	"github.com/sealbro/pikvm-automator/internal/config"
 	"github.com/sealbro/pikvm-automator/internal/macro"
 	"github.com/sealbro/pikvm-automator/internal/queue"
 	"github.com/sealbro/pikvm-automator/internal/storage"
@@ -24,14 +25,18 @@ type PiKvmAutomatorServer struct {
 	commandRepository *storage.CommandRepository
 	logger            *slog.Logger
 	lastCall          time.Time
+	callDebounce      time.Duration
+	maxDeep           int
 }
 
-func NewPiKvmAutomatorServer(logger *slog.Logger, player *queue.ExpressionPlayer, commandRepository *storage.CommandRepository) *PiKvmAutomatorServer {
+func NewPiKvmAutomatorServer(logger *slog.Logger, player *queue.ExpressionPlayer, commandRepository *storage.CommandRepository, config config.PiKvmAutomatorConfig) *PiKvmAutomatorServer {
 	return &PiKvmAutomatorServer{
 		logger:            logger,
 		player:            player,
 		commandRepository: commandRepository,
 		lastCall:          time.Now(),
+		callDebounce:      time.Duration(config.CallDebounceSeconds) * time.Second,
+		maxDeep:           config.TemplateMaxDeep,
 	}
 }
 
@@ -57,14 +62,14 @@ func (s *PiKvmAutomatorServer) CallCommand(ctx context.Context, req *gen.CallCom
 		return nil, status.Errorf(codes.InvalidArgument, "expression is required")
 	}
 
-	if time.Since(s.lastCall) < 1*time.Second {
+	if time.Since(s.lastCall) < s.callDebounce {
 		s.logger.WarnContext(ctx, "too many requests", slog.String("expression", req.Expression))
 		return nil, status.Errorf(codes.ResourceExhausted, "too many requests")
 	}
 	s.lastCall = time.Now()
 
 	expressions := req.Expression
-	maxDeep := 5
+	maxDeep := s.maxDeep
 	for {
 		matches := templateRegexp.FindAllStringSubmatch(expressions, -1)
 		for _, match := range matches {
