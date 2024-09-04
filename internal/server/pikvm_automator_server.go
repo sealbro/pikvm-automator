@@ -21,9 +21,10 @@ type PiKvmAutomatorServer struct {
 	logger            *slog.Logger
 	lastCall          time.Time
 	callDebounce      time.Duration
+	trigger           *queue.ExpressionTrigger
 }
 
-func NewPiKvmAutomatorServer(logger *slog.Logger, player *queue.ExpressionPlayer, commandRepository *storage.CommandRepository, templateReplacer *services.TemplateReplacer, config config.PiKvmAutomatorConfig) *PiKvmAutomatorServer {
+func NewPiKvmAutomatorServer(logger *slog.Logger, player *queue.ExpressionPlayer, commandRepository *storage.CommandRepository, templateReplacer *services.TemplateReplacer, trigger *queue.ExpressionTrigger, config config.PiKvmAutomatorConfig) *PiKvmAutomatorServer {
 	return &PiKvmAutomatorServer{
 		logger:            logger,
 		player:            player,
@@ -31,6 +32,7 @@ func NewPiKvmAutomatorServer(logger *slog.Logger, player *queue.ExpressionPlayer
 		lastCall:          time.Now(),
 		callDebounce:      time.Duration(config.CallDebounceSeconds) * time.Second,
 		templateReplacer:  templateReplacer,
+		trigger:           trigger,
 	}
 }
 
@@ -63,7 +65,15 @@ func (s *PiKvmAutomatorServer) CallCommand(ctx context.Context, req *gen.CallCom
 	s.lastCall = time.Now()
 
 	macroExp := s.templateReplacer.Replace(ctx, req.Expression)
-	s.player.AddExpression(macroExp)
+	if req.Trigger != "" {
+		if queue.TriggerType(req.Trigger).IsValid() {
+			s.trigger.AddExpression(queue.TriggerType(req.Trigger), macroExp)
+		} else {
+			s.logger.WarnContext(ctx, "Invalid trigger", slog.String("trigger", req.Trigger))
+		}
+	} else {
+		s.player.AddExpression(macroExp)
+	}
 
 	return &gen.CallCommandResponse{}, nil
 }

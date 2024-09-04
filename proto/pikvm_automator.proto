@@ -51,6 +51,7 @@ message CommandListResponse {
 
 message CallCommandRequest {
   string expression = 1;
+  string trigger = 2;
 }
 
 message CallCommandResponse {

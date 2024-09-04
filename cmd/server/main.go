@@ -34,7 +34,7 @@ func main() {
 	piKvmClient := pikvm.NewPiKvmClient(logger, conf.PiKvmConfig)
 
 	player := queue.NewExpressionPlayer(logger)
-	sent := player.Play(ctx)
+	sent := player.Start(ctx)
 
 	clientCtx, clientCancel := context.WithCancel(ctx)
 	defer clientCancel()
@@ -45,9 +45,11 @@ func main() {
 		return
 	}
 
+	trigger := queue.NewExpressionTrigger(logger, player)
+
 	commandRepository := storage.NewCommandRepository(conf.CommandsPath)
 	templateReplacer := services.NewTemplateReplacer(logger, commandRepository, conf)
-	automatorServer := server.NewPiKvmAutomatorServer(logger, player, commandRepository, templateReplacer, conf)
+	automatorServer := server.NewPiKvmAutomatorServer(logger, player, commandRepository, templateReplacer, trigger, conf)
 
 	grpc_ext.NewGRPC(logger, conf.GatewayConfig).
 		AddHTTPGateway(conf.GrpcGatewayAddress).
@@ -76,15 +78,8 @@ func main() {
 			} else {
 				if recvEvent.EventType == pikvm.HidState {
 					event := recvEvent.Event.(pikvm.HIDStateEvent)
-					if event.Online && (event.Mouse.Online || event.Keyboard.Online) {
-						//counter++
-						//logger.WarnContext(ctx, "hid online", slog.Int("step", counter), slog.Any("event", event))
-						//
-						//if counter == 2 {
-						//	logger.InfoContext(ctx, "BIOS F2")
-						//	macroExp := templateReplacer.Replace(ctx, "%proxmox_mode%")
-						//	player.AddExpression(macroExp)
-						//}
+					if event.Online {
+						trigger.Rise(queue.PiKvmHidOnline)
 					}
 				}
 			}

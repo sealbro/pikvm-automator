@@ -105,6 +105,8 @@ components:
             properties:
                 expression:
                     type: string
+                trigger:
+                    type: string
         CallCommandResponse:
             type: object
             properties: {}

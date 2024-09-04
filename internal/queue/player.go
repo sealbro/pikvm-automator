@@ -30,7 +30,7 @@ func (p *ExpressionPlayer) AddExpression(expression *macro.Expression) {
 	p.Expressions = append(p.Expressions, expression)
 }
 
-func (p *ExpressionPlayer) Play(ctx context.Context) <-chan pikvm.PiKvmEvent {
+func (p *ExpressionPlayer) Start(ctx context.Context) <-chan pikvm.PiKvmEvent {
 	events := make(chan pikvm.PiKvmEvent, 20)
 	go func() {
 		for {
