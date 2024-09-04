@@ -37,7 +37,7 @@ type Expression struct {
 	exp    string
 }
 
-func New(exp string) *Expression {
+func NewExpression(exp string) *Expression {
 	return &Expression{
 		exp: exp,
 	}

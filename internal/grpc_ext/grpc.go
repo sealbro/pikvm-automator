@@ -9,11 +9,12 @@ import (
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	"log/slog"
+	"math"
 	"net"
 	"net/http"
 )
 
-var maxSendMsgSize = grpc.MaxSendMsgSize(1500)
+var maxSendMsgSize = grpc.MaxSendMsgSize(math.MaxInt32)
 
 type ServerRegistrationFunc func(registrar grpc.ServiceRegistrar, mux *runtime.ServeMux) error
 

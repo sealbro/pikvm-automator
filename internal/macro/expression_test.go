@@ -26,7 +26,7 @@ func TestExpression_SimpleParse(t *testing.T) {
 
 	for _, exp := range expressions {
 		t.Run(exp, func(t *testing.T) {
-			macros := New(exp)
+			macros := NewExpression(exp)
 			macros.Parse()
 			s := macros.String()
 			if s != exp {
@@ -44,7 +44,7 @@ func TestExpression_ParseWithExceptions(t *testing.T) {
 
 	for _, exp := range expressions {
 		t.Run(exp, func(t *testing.T) {
-			macros := New(exp)
+			macros := NewExpression(exp)
 			macros.Parse()
 			s := macros.String()
 			if s != exp {

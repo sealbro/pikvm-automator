@@ -9,6 +9,8 @@ import (
 type EventType string
 
 const (
+	Ping        EventType = "ping"
+	Pong        EventType = "pong"
 	Keyboard    EventType = "key"
 	MouseMove   EventType = "mouse_move"
 	MouseButton EventType = "mouse_button"

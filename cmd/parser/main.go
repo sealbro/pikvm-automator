@@ -28,7 +28,7 @@ func main() {
 	}
 
 	for _, exp := range expressions {
-		macros := macro.New(exp)
+		macros := macro.NewExpression(exp)
 		//fmt.Println(macros)
 		group := macros.Parse()
 		compiledExp := macros.String()
