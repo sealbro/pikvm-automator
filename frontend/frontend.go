@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-//go:embed dist/pikvm-automator/browser
+// //go:embed dist/pikvm-automator/browser
 var embeddedFiles embed.FS
 
 func AddFrontend(mux *runtime.ServeMux) error {
