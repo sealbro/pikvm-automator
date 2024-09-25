@@ -34,12 +34,24 @@ func main() {
 	piKvmClient := pikvm.NewPiKvmClient(logger, conf.PiKvmConfig)
 
 	player := queue.NewExpressionPlayer(logger)
-	sent := player.Start(ctx)
+	sender := player.Start(ctx)
 
 	clientCtx, clientCancel := context.WithCancel(ctx)
 	defer clientCancel()
 
-	err, receive := piKvmClient.Start(clientCtx, sent)
+	receiverChan := make(chan []byte, 20)
+	defer func() {
+		close(receiverChan)
+		receiverChan = nil
+	}()
+	receiver := func(data []byte) {
+		if receiverChan == nil {
+			return
+		}
+		receiverChan <- data
+	}
+
+	err := piKvmClient.Start(clientCtx, sender, receiver)
 	if err != nil {
 		logger.ErrorContext(ctx, "pikvm client start", slog.Any("err", err))
 		return
@@ -62,9 +74,9 @@ func main() {
 
 	go func() {
 		for {
-			bytes, ok := <-receive
+			bytes, ok := <-receiverChan
 			if !ok {
-				logger.InfoContext(ctx, "receive closed")
+				logger.InfoContext(ctx, "receiver closed")
 				return
 			}
 

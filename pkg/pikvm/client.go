@@ -10,7 +10,6 @@ import (
 	"github.com/sealbro/pikvm-automator/pkg/rand"
 	"log/slog"
 	"net/http"
-	"net/url"
 	"syscall"
 	"time"
 )
@@ -31,18 +30,17 @@ func NewPiKvmClient(logger *slog.Logger, config PiKvmConfig) *PiKvmClient {
 	}
 }
 
-func (c *PiKvmClient) Start(ctx context.Context, send <-chan PiKvmEvent) (error, <-chan []byte) {
+func (c *PiKvmClient) Start(ctx context.Context, sender <-chan PiKvmEvent, receiver func([]byte)) error {
 	err := c.reconnect()
 	if err != nil {
-		return err, nil
+		return err
 	}
 
-	receive := make(chan []byte, 20)
-	go c.receiveEvent(ctx, receive)
-	go c.sendEvent(ctx, send)
+	go c.receiveEvent(ctx, receiver)
+	go c.sendEvent(ctx, sender)
 	go c.stop(ctx)
 
-	return nil, receive
+	return nil
 }
 
 func (c *PiKvmClient) stop(ctx context.Context) {
@@ -58,8 +56,7 @@ func (c *PiKvmClient) stop(ctx context.Context) {
 	}
 }
 
-func (c *PiKvmClient) receiveEvent(ctx context.Context, receive chan<- []byte) {
-	defer close(receive)
+func (c *PiKvmClient) receiveEvent(ctx context.Context, receive func([]byte)) {
 	ticker := time.NewTicker(10 * time.Millisecond)
 	defer ticker.Stop()
 	for {
@@ -72,12 +69,12 @@ func (c *PiKvmClient) receiveEvent(ctx context.Context, receive chan<- []byte) {
 				c.logger.ErrorContext(ctx, "receiveEvent", slog.Any("err", err))
 				return
 			}
-			receive <- message
+			receive(message)
 		}
 	}
 }
 
-func (c *PiKvmClient) sendEvent(ctx context.Context, send <-chan PiKvmEvent) {
+func (c *PiKvmClient) sendEvent(ctx context.Context, sender <-chan PiKvmEvent) {
 	ticker := time.NewTicker(100 * time.Millisecond)
 	defer ticker.Stop()
 
@@ -85,7 +82,7 @@ func (c *PiKvmClient) sendEvent(ctx context.Context, send <-chan PiKvmEvent) {
 		select {
 		case <-ctx.Done():
 			return
-		case event := <-send:
+		case event := <-sender:
 			data, err := json.Marshal(event)
 			if err != nil {
 				c.logger.ErrorContext(ctx, "marshal", slog.Any("err", err))
@@ -130,21 +127,20 @@ func (c *PiKvmClient) reconnect() error {
 	httpHeader.Add("X-KVMD-User", c.config.PiKvmUsername)
 	httpHeader.Add("X-KVMD-Passwd", c.config.PiKvmPassword)
 
-	u := url.URL{Scheme: "wss", Host: c.config.PiKvmHost, Path: "/api/ws", RawQuery: "stream=0"}
-	c.logger.Info("connecting to", slog.String("url", u.String()))
+	c.logger.Info("connecting to", slog.String("url", c.config.PiKvmAddress))
 
 	if c.config.SkipVerify {
 		websocket.DefaultDialer.TLSClientConfig = &tls.Config{
 			InsecureSkipVerify: true,
 		}
 	}
-	conn, _, err := websocket.DefaultDialer.Dial(u.String(), httpHeader)
+	conn, _, err := websocket.DefaultDialer.Dial(c.config.PiKvmAddress, httpHeader)
 	if err != nil {
 		return fmt.Errorf("pikvm dial: %w", err)
 	}
 	keepAlive(conn, 30*time.Second)
 
-	c.logger.Info("connected to", slog.String("url", u.String()))
+	c.logger.Info("connected to", slog.String("url", c.config.PiKvmAddress))
 	c.connection = conn
 
 	return nil
