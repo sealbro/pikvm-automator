@@ -9,7 +9,9 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/sealbro/pikvm-automator/pkg/rand"
 	"log/slog"
+	"net"
 	"net/http"
+	"strings"
 	"syscall"
 	"time"
 )
@@ -123,14 +125,9 @@ func (c *PiKvmClient) reconnect() error {
 		_ = c.connection.Close()
 	}
 
-	httpHeader := http.Header{}
-	httpHeader.Add("X-KVMD-User", c.config.PiKvmUsername)
-	httpHeader.Add("X-KVMD-Passwd", c.config.PiKvmPassword)
-
 	c.logger.Info("connecting to", slog.String("url", c.config.PiKvmAddress))
 
-	websocket.DefaultDialer.TLSClientConfig = &tls.Config{InsecureSkipVerify: c.config.SkipVerify}
-	conn, _, err := websocket.DefaultDialer.Dial(c.config.PiKvmAddress, httpHeader)
+	conn, err := c.dial()
 	if err != nil {
 		return fmt.Errorf("pikvm dial: %w", err)
 	}
@@ -140,6 +137,42 @@ func (c *PiKvmClient) reconnect() error {
 	c.connection = conn
 
 	return nil
+}
+
+func (c *PiKvmClient) dial() (*websocket.Conn, error) {
+	httpHeader := http.Header{}
+	httpHeader.Add("X-KVMD-User", c.config.PiKvmUsername)
+	httpHeader.Add("X-KVMD-Passwd", c.config.PiKvmPassword)
+
+	if strings.HasPrefix(c.config.PiKvmAddress, "unix") {
+		sockPath := strings.TrimPrefix(c.config.PiKvmAddress, "unix:")
+		queryParameters := ""
+		split := strings.Split(sockPath, ".sock")
+		if len(split) > 1 {
+			queryParameters = split[1]
+		}
+		sockFile := fmt.Sprintf("%s.sock", split[0])
+
+		c.logger.Info("connecting to", slog.String("url", sockFile), slog.String("params", queryParameters))
+
+		d := websocket.Dialer{
+			NetDialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
+				return (&net.Dialer{}).DialContext(ctx, "unix", sockFile)
+			},
+		}
+		ws, _, err := d.Dial(fmt.Sprintf("ws://unix%s", queryParameters), httpHeader)
+		if err != nil {
+			return nil, err
+		}
+		return ws, nil
+	} else {
+		websocket.DefaultDialer.TLSClientConfig = &tls.Config{InsecureSkipVerify: c.config.SkipVerify}
+		wsConn, _, err := websocket.DefaultDialer.Dial(c.config.PiKvmAddress, httpHeader)
+		if err != nil {
+			return nil, err
+		}
+		return wsConn, nil
+	}
 }
 
 func keepAlive(c *websocket.Conn, timeout time.Duration) {
