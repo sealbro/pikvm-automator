@@ -1,26 +1,26 @@
 package rand
 
 import (
-	"math/rand/v2"
+	rand2 "math/rand/v2"
 	"time"
 )
 
 type Rand struct {
-	rnd *rand.Rand
+	rnd *rand2.Rand
 }
 
 func New() *Rand {
 	return &Rand{
-		rnd: rand.New(&seedSource{}),
+		rnd: rand2.New(&seedSource{}),
 	}
 }
 
 func (r *Rand) Range(min, max int) int {
-	return rand.IntN(max-min) + min
+	return rand2.IntN(max-min) + min
 }
 
 type seedSource struct {
-	rand.Source
+	rand2.Source
 }
 
 func (s seedSource) Uint64() uint64 {

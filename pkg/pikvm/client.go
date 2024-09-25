@@ -129,11 +129,7 @@ func (c *PiKvmClient) reconnect() error {
 
 	c.logger.Info("connecting to", slog.String("url", c.config.PiKvmAddress))
 
-	if c.config.SkipVerify {
-		websocket.DefaultDialer.TLSClientConfig = &tls.Config{
-			InsecureSkipVerify: true,
-		}
-	}
+	websocket.DefaultDialer.TLSClientConfig = &tls.Config{InsecureSkipVerify: c.config.SkipVerify}
 	conn, _, err := websocket.DefaultDialer.Dial(c.config.PiKvmAddress, httpHeader)
 	if err != nil {
 		return fmt.Errorf("pikvm dial: %w", err)

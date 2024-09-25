@@ -22,9 +22,13 @@ generate_ts_client:
 	openapi-generator-cli generate -g typescript-angular -i generated/openapiv3/openapi.yaml -o frontend/src/app/api
 .PHONY: .generate_ts_client
 
-deps: deps_brew deps_npm ### install dependencies
+deps: deps_brew deps_npm deps_go ### install dependencies
 	echo "deps..."
 .PHONY: deps
+
+deps_go: ### install dependencies from go
+	go install github.com/securego/gosec/v2/cmd/gosec@latest
+.PHONY: deps_brew
 
 deps_brew: ### install dependencies from brew
 	brew install bufbuild/buf/buf protobuf openjdk

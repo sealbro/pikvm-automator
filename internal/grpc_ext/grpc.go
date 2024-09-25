@@ -12,6 +12,7 @@ import (
 	"math"
 	"net"
 	"net/http"
+	"time"
 )
 
 var maxSendMsgSize = grpc.MaxSendMsgSize(math.MaxInt32)
@@ -40,8 +41,9 @@ func NewGRPC(logger *slog.Logger, config GatewayConfig) *Server {
 func (s *Server) AddHTTPGateway(address string) *Server {
 	s.httpMux = runtime.NewServeMux()
 	s.httpServer = &http.Server{
-		Addr:    address,
-		Handler: s.httpMux,
+		Addr:              address,
+		Handler:           s.httpMux,
+		ReadHeaderTimeout: time.Minute * 5,
 	}
 	return s
 }

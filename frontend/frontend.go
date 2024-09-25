@@ -2,6 +2,7 @@ package frontend
 
 import (
 	"embed"
+	"fmt"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"io/fs"
 	"net/http"
@@ -12,16 +13,16 @@ import (
 //go:embed dist/pikvm-automator/browser
 var embeddedFiles embed.FS
 
-func AddFrontend(mux *runtime.ServeMux) {
+func AddFrontend(mux *runtime.ServeMux) error {
 	subFS, err := fs.Sub(embeddedFiles, "dist/pikvm-automator/browser")
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("failed to create sub filesystem: %w", err)
 	}
 
 	system := http.FS(subFS)
 	fileServer := http.FileServer(system)
 
-	mux.HandlePath(http.MethodGet, "/*", func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
+	err = mux.HandlePath(http.MethodGet, "/*", func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
 		if r.URL.Path != "/" {
 			_, err = subFS.Open(strings.TrimPrefix(path.Clean(r.URL.Path), "/"))
 			if err != nil {
@@ -30,4 +31,9 @@ func AddFrontend(mux *runtime.ServeMux) {
 		}
 		fileServer.ServeHTTP(w, r)
 	})
+	if err != nil {
+		return fmt.Errorf("failed to handle path: %w", err)
+	}
+
+	return nil
 }

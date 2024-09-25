@@ -115,7 +115,7 @@ func (r *CommandRepository) load() error {
 }
 
 func (r *CommandRepository) save() error {
-	file, err := os.OpenFile(r.filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+	file, err := os.OpenFile(r.filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
 		return err
 	}
