@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/sealbro/pikvm-automator/internal/config"
 	"github.com/sealbro/pikvm-automator/internal/macro"
-	"github.com/sealbro/pikvm-automator/internal/storage"
+	"github.com/sealbro/pikvm-automator/internal/repository"
 	"log/slog"
 	"regexp"
 	"strings"
@@ -17,10 +17,10 @@ var (
 type TemplateReplacer struct {
 	maxDeep           int
 	logger            *slog.Logger
-	commandRepository *storage.CommandRepository
+	commandRepository *repository.Queries
 }
 
-func NewTemplateReplacer(logger *slog.Logger, commandRepository *storage.CommandRepository, config config.PiKvmAutomatorConfig) *TemplateReplacer {
+func NewTemplateReplacer(logger *slog.Logger, commandRepository *repository.Queries, config config.PiKvmAutomatorConfig) *TemplateReplacer {
 	return &TemplateReplacer{
 		logger:            logger,
 		commandRepository: commandRepository,
@@ -35,7 +35,7 @@ func (t *TemplateReplacer) Replace(ctx context.Context, expressions string) *mac
 		for _, match := range matches {
 			template := match[0]
 			id := match[1]
-			command, err := t.commandRepository.GetCommand(id)
+			command, err := t.commandRepository.GetCommand(ctx, id)
 			if err != nil {
 				t.logger.WarnContext(ctx, "can't get command", slog.String("id", id), slog.Any("err", err))
 				expressions = strings.ReplaceAll(expressions, template, "42ms")

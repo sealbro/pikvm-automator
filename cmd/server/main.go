@@ -3,13 +3,15 @@ package main
 import (
 	"context"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	pikvm_automator "github.com/sealbro/pikvm-automator"
 	gen "github.com/sealbro/pikvm-automator/generated/go"
 	"github.com/sealbro/pikvm-automator/internal/config"
 	"github.com/sealbro/pikvm-automator/internal/grpc_ext"
 	"github.com/sealbro/pikvm-automator/internal/queue"
+	"github.com/sealbro/pikvm-automator/internal/repository"
 	"github.com/sealbro/pikvm-automator/internal/server"
 	"github.com/sealbro/pikvm-automator/internal/services"
-	"github.com/sealbro/pikvm-automator/internal/storage"
+	"github.com/sealbro/pikvm-automator/internal/sqlite"
 	"github.com/sealbro/pikvm-automator/pkg/pikvm"
 	"github.com/sethvargo/go-envconfig"
 	"google.golang.org/grpc"
@@ -59,9 +61,20 @@ func main() {
 
 	trigger := queue.NewExpressionTrigger(logger, player)
 
-	commandRepository := storage.NewCommandRepository(conf.CommandsPath)
-	templateReplacer := services.NewTemplateReplacer(logger, commandRepository, conf)
-	automatorServer := server.NewPiKvmAutomatorServer(logger, player, commandRepository, templateReplacer, trigger, conf)
+	db, err := sqlite.New(conf.DatabasePath)
+	if err != nil {
+		logger.ErrorContext(ctx, "sqlite new", slog.Any("err", err))
+		return
+	}
+	err = sqlite.ApplySchema(ctx, db, pikvm_automator.SchemaSql)
+	if err != nil {
+		logger.WarnContext(ctx, "sqlite apply schema", slog.Any("err", err))
+	}
+
+	queries := repository.New(db)
+
+	templateReplacer := services.NewTemplateReplacer(logger, queries, conf)
+	automatorServer := server.NewPiKvmAutomatorServer(logger, player, queries, templateReplacer, trigger, conf)
 
 	grpc_ext.NewGRPC(logger, conf.GatewayConfig).
 		AddHTTPGateway(conf.GrpcGatewayAddress).

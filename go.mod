@@ -5,6 +5,7 @@ go 1.23
 require (
 	github.com/gorilla/websocket v1.5.3
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.22.0
+	github.com/mattn/go-sqlite3 v1.14.22
 	github.com/sethvargo/go-envconfig v1.1.0
 	golang.org/x/sync v0.8.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20240924160255-9d4c2d233b61

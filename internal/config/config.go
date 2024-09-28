@@ -11,4 +11,5 @@ type PiKvmAutomatorConfig struct {
 	CommandsPath        string `env:"COMMANDS_PATH, default=commands.yaml"`
 	TemplateMaxDeep     int    `env:"TEMPLATE_MAX_DEEP, default=10"`
 	CallDebounceSeconds int    `env:"CALL_DEBOUNCE_SECONDS, default=2"`
+	DatabasePath        string `env:"DATABASE_PATH, default=pikvm-automator.db"`
 }
