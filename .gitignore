@@ -24,4 +24,5 @@ go.work.sum
 
 .idea
 .env
+*.db
 commands.yaml

@@ -1,0 +1,27 @@
+### Call command alt_tab
+POST http://localhost:8032/api/commands/call
+Content-Type: application/json
+
+{
+  "expression": "AltLeft+Tab"
+}
+
+### Add new command proxmox_mode
+PUT http://localhost:8032/api/command
+Content-Type: application/json
+
+{
+  "id": "proxmox_mode",
+  "description": "Proxmox bios mode",
+  "expression": "2s|F2|2s|%bios_enable_virtualization%|1s|%bios_boot_load_windows%|1s|%bios_save_exit%"
+}
+
+### Get all stored commands
+GET http://localhost:8032/api/commands
+Content-Type: application/json
+
+### Delete command proxmox_mode
+DELETE http://localhost:8032/api/command/proxmox_mode
+Content-Type: application/json
+
+
