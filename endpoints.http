@@ -1,6 +1,7 @@
 ### Call command alt_tab
 POST http://localhost:8032/api/commands/call
 Content-Type: application/json
+Authorization: Basic {{basic_auth}}
 
 {
   "expression": "AltLeft+Tab"
@@ -9,6 +10,7 @@ Content-Type: application/json
 ### Add new command proxmox_mode
 PUT http://localhost:8032/api/command
 Content-Type: application/json
+Authorization: Basic {{basic_auth}}
 
 {
   "id": "proxmox_mode",
@@ -19,9 +21,9 @@ Content-Type: application/json
 ### Get all stored commands
 GET http://localhost:8032/api/commands
 Content-Type: application/json
+Authorization: Basic {{basic_auth}}
 
 ### Delete command proxmox_mode
 DELETE http://localhost:8032/api/command/proxmox_mode
 Content-Type: application/json
-
-
+Authorization: Basic {{basic_auth}}
