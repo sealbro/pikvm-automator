@@ -26,3 +26,4 @@ go.work.sum
 .env
 *.db
 commands.yaml
+*.private.env.json

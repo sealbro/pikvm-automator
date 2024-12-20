@@ -11,7 +11,6 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
-	"strings"
 	"syscall"
 	"time"
 )
@@ -32,7 +31,29 @@ func NewPiKvmClient(logger *slog.Logger, config PiKvmConfig) *PiKvmClient {
 	}
 }
 
-func (c *PiKvmClient) Start(ctx context.Context, sender <-chan PiKvmEvent, receiver func([]byte)) error {
+func (c *PiKvmClient) Check(ctx context.Context, username, password string) bool {
+	timeout, cancelFunc := context.WithTimeout(ctx, 5*time.Second)
+	defer cancelFunc()
+
+	address := c.config.ApiAddress("/api/auth/check")
+	request, err := http.NewRequestWithContext(timeout, http.MethodGet, address, nil)
+	if err != nil {
+		c.logger.Error("request check", slog.Any("err", err))
+		return false
+	}
+
+	request.Header = piKvmAuthHeader(username, password)
+
+	do, err := http.DefaultClient.Do(request)
+	if err != nil {
+		c.logger.Error("do request check", slog.Any("err", err))
+		return false
+	}
+
+	return do.StatusCode == http.StatusOK
+}
+
+func (c *PiKvmClient) StartWebSocket(ctx context.Context, sender <-chan PiKvmEvent, receiver func([]byte)) error {
 	err := c.reconnect()
 	if err != nil {
 		return err
@@ -139,40 +160,28 @@ func (c *PiKvmClient) reconnect() error {
 	return nil
 }
 
-func (c *PiKvmClient) dial() (*websocket.Conn, error) {
-	httpHeader := http.Header{}
-	httpHeader.Add("X-KVMD-User", c.config.PiKvmUsername)
-	httpHeader.Add("X-KVMD-Passwd", c.config.PiKvmPassword)
+func (c *PiKvmClient) dial() (wsConn *websocket.Conn, err error) {
+	authHeader := c.config.AuthHeader()
+	if c.config.IsUnixSocket() {
+		sockPath, params, wsAddress := c.config.UnixSocketAddress(0)
 
-	if strings.HasPrefix(c.config.PiKvmAddress, "unix") {
-		sockPath := strings.TrimPrefix(c.config.PiKvmAddress, "unix:")
-		queryParameters := ""
-		split := strings.Split(sockPath, ".sock")
-		if len(split) > 1 {
-			queryParameters = split[1]
-		}
-		sockFile := fmt.Sprintf("%s.sock", split[0])
-
-		c.logger.Info("connecting to", slog.String("url", sockFile), slog.String("params", queryParameters))
+		c.logger.Info("connecting to", slog.String("url", sockPath), slog.String("params", params))
 
 		d := websocket.Dialer{
 			NetDialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
-				return (&net.Dialer{}).DialContext(ctx, "unix", sockFile)
+				return (&net.Dialer{}).DialContext(ctx, "unix", sockPath)
 			},
 		}
-		ws, _, err := d.Dial(fmt.Sprintf("ws://unix%s", queryParameters), httpHeader)
-		if err != nil {
-			return nil, err
-		}
-		return ws, nil
+		wsConn, _, err = d.Dial(wsAddress, authHeader)
 	} else {
 		websocket.DefaultDialer.TLSClientConfig = &tls.Config{InsecureSkipVerify: c.config.SkipVerify}
-		wsConn, _, err := websocket.DefaultDialer.Dial(c.config.PiKvmAddress, httpHeader)
-		if err != nil {
-			return nil, err
-		}
-		return wsConn, nil
+		wsConn, _, err = websocket.DefaultDialer.Dial(c.config.WebSocketAddress(0), authHeader)
 	}
+
+	if err != nil {
+		return nil, err
+	}
+	return wsConn, nil
 }
 
 func keepAlive(c *websocket.Conn, timeout time.Duration) {

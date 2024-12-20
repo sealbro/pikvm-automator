@@ -51,7 +51,7 @@ func main() {
 		receiverChan <- data
 	}
 
-	err := piKvmClient.Start(clientCtx, sender, receiver)
+	err := piKvmClient.StartWebSocket(clientCtx, sender, receiver)
 	if err != nil {
 		logger.ErrorContext(ctx, "pikvm client start", slog.Any("err", err))
 		return
@@ -62,8 +62,9 @@ func main() {
 	commandRepository := storage.NewCommandRepository(conf.CommandsPath)
 	templateReplacer := services.NewTemplateReplacer(logger, commandRepository, conf)
 	automatorServer := server.NewPiKvmAutomatorServer(logger, player, commandRepository, templateReplacer, trigger, conf)
+	authInterceptor := grpc_ext.NewAuthInterceptor(logger, piKvmClient)
 
-	grpc_ext.NewGRPC(logger, conf.GatewayConfig).
+	grpc_ext.NewGRPC(logger, conf.GatewayConfig, authInterceptor).
 		AddHTTPGateway(conf.GrpcGatewayAddress).
 		AddServerImplementation(func(registrar grpc.ServiceRegistrar, mux *runtime.ServeMux) error {
 			//frontend.AddFrontend(mux)

@@ -29,11 +29,19 @@ type Server struct {
 }
 
 // NewGRPC new grpc server
-func NewGRPC(logger *slog.Logger, config GatewayConfig) *Server {
+func NewGRPC(logger *slog.Logger, config GatewayConfig, authInterceptor *AuthInterceptor) *Server {
+	opts := []grpc.ServerOption{
+		maxSendMsgSize,
+	}
+
+	if config.GrpcPassthroughAuth {
+		opts = append(opts, grpc.UnaryInterceptor(authInterceptor.Interceptor))
+	}
+
 	return &Server{
 		logger:    logger,
 		config:    config,
-		grpcSever: grpc.NewServer(maxSendMsgSize),
+		grpcSever: grpc.NewServer(opts...),
 	}
 }
 
