@@ -19,9 +19,7 @@ jobs:
         fetch-depth: 0
     -
       name: Run Gosec Security Scanner
-      uses: securego/gosec@v2
-      env:
-        GOTOOLCHAIN: auto
+      uses: securego/gosec@v2.27.1
       with:
         args: -exclude=G115,G404,G402 ./...
     -
